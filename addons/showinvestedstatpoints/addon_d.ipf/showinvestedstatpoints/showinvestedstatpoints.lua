@@ -4,8 +4,10 @@ function SHOWINVESTEDSTATPOINTS_ON_INIT(addon, frame)
 	acutil.setupHook(STATUS_INFO_HOOKED, "STATUS_INFO");
 end
 
-function STATUS_INFO_HOOKED(frame)
-	_G["STATUS_INFO_OLD"](frame);
+function STATUS_INFO_HOOKED()
+	_G["STATUS_INFO_OLD"]();
+
+	local frame = ui.GetFrame('status');
 
 	local Status_gboxctrl = frame:GetChild('statusGbox');
 	local Status_internal_gboxctrl = GET_CHILD(Status_gboxctrl,'internalstatusBox');
