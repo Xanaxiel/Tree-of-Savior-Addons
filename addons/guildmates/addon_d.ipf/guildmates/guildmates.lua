@@ -46,6 +46,62 @@ function POPUP_GUILD_MEMBER_HOOKED(parent, ctrl)
 	ui.OpenContextMenu(context);
 end
 
+function GET_GUILD_EXP()
+	local pcGuild = session.party.GetPartyInfo(PARTY_GUILD);
+	local currentExp = 0;
+	local nextLvlExp = 0;
+	
+	local guildObj = GetIES(pcGuild:GetObject());
+	local lv = guildObj.Level;
+	local nextLv = lv + 1;
+	
+	local currentExp = guildObj.Exp;
+	local curLevelCls = GetClass("GuildExp", lv);
+	local nextLevelCls = GetClass("GuildExp", nextLv);
+	local curExp = currentExp - curLevelCls.Exp;
+	
+	if nextLevelCls ~= nil then
+		currentExp = curExp
+		nextLvlExp = nextLevelCls.Exp - curLevelCls.Exp
+	else
+		nextLvlExp = nil
+	end
+	return currentExp, nextLvlExp;
+end
+
+function SHOW_GUILD_EXP(frame)
+	local infoCset = GET_CHILD(frame, 'information', 'ui::CControlSet');
+	local gBox = GET_CHILD(infoCset, "partynotegbox",'ui::CGroupBox');
+	local guildExpGauge = gBox:CreateOrGetControl("gauge", "guildExpGauge", 0, 0, 412, 40);
+    tolua.cast(guildExpGauge, "ui::CGauge");
+	guildExpGauge:SetTextByKey("text", "test")
+    guildExpGauge:SetGravity(ui.LEFT, ui.BOTTOM)
+    guildExpGauge:SetSkinName("gauge_barrack_guild")
+    
+    local text = guildExpGauge:CreateOrGetControl("richtext", "guildExpText", 0, 0, 412, 40);
+    tolua.cast(text, "ui::CRichText");
+    text:SetFontName("white_18_ol");
+    
+	local currExp, nextLvlExp = getGuildExp();
+	if nextLvlExp ~= nil then
+		local taltsNeeded = nextLvlExp/20 - currExp/20
+	    guildExpGauge:SetPoint(currExp, nextLvlExp)
+	    text:SetText("Need " .. taltsNeeded  .. " more talts to level up!");
+	else 
+		guildExpGauge:SetPoint(1, 1)
+		text:SetText("Guild is at max level!");
+	end
+	
+    guildExpGauge:Resize(guildExpGauge:GetWidth(), guildExpGauge:GetHeight())
+    guildExpGauge:ShowWindow(1);
+    guildExpGauge:Invalidate();
+    
+    
+    text:SetTextAlign("center", "center")
+    gBox:Resize(gBox:GetWidth(), gBox:GetHeight());
+    gBox:Invalidate();
+end
+
 function UPDATE_GUILDINFO_HOOKED(frame)
 	local pcparty = session.party.GetPartyInfo(PARTY_GUILD);
 	if pcparty == nil then
@@ -146,6 +202,8 @@ function UPDATE_GUILDINFO_HOOKED(frame)
 	else
 		frame:StopUpdateScript("UPDATE_REMAIN_GUILD_ENEMY_TIME");
 	end
+
+	SHOW_GUILD_EXP(frame)
 
 	GUILD_UPDATE_TOWERINFO(frame, pcparty, partyObj);
 
